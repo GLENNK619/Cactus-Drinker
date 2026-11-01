@@ -1,0 +1,10 @@
+{
+  "name": "CactusDrop",
+  "description": "Gamified hydration tracking and habit-building app. Drink water, grow your virtual cactus garden, maintain streaks, and receive smart hydration reminders.",
+  "requestFramePermissions": [
+    "notifications"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

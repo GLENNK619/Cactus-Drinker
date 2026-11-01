@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net - deny all by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.uid is string &&
+             data.uid.size() > 0 &&
+             data.uid.size() <= 128 &&
+             data.dailyGoal is number &&
+             data.dailyGoal >= 100 &&
+             data.dailyGoal <= 20000 &&
+             data.servingSize is number &&
+             data.servingSize >= 20 &&
+             data.servingSize <= 2000 &&
+             data.currentStreak is number &&
+             data.currentStreak >= 0 &&
+             data.longestStreak is number &&
+             data.longestStreak >= 0 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 64)) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 256)) &&
+             (!('unit' in data) || (data.unit in ['ml', 'oz'])) &&
+             (!('activeCactusId' in data) || (data.activeCactusId is string && data.activeCactusId.size() <= 64)) &&
+             (!('unlockedCacti' in data) || (data.unlockedCacti is list && data.unlockedCacti.size() <= 50)) &&
+             (!('unlockedBadges' in data) || (data.unlockedBadges is list && data.unlockedBadges.size() <= 50)) &&
+             (!('lifetimeTaps' in data) || (data.lifetimeTaps is number && data.lifetimeTaps >= 0)) &&
+             (!('theme' in data) || (data.theme in ['light', 'dark'])) &&
+             (!('customPots' in data) || data.customPots is map) &&
+             (!('notificationSettings' in data) || data.notificationSettings is map);
+    }
+
+    function isValidDailyRecord(data) {
+      return data.id is string &&
+             data.id.size() <= 32 &&
+             data.userId is string &&
+             data.userId.size() <= 128 &&
+             data.date is string &&
+             data.date.size() <= 10 &&
+             data.totalIntake is number &&
+             data.totalIntake >= 0 &&
+             data.goal is number &&
+             data.goal >= 100 &&
+             data.goalAchieved is bool &&
+             data.tapsCount is number &&
+             data.tapsCount >= 0 &&
+             data.cactusGrowthPercentage is number &&
+             data.cactusGrowthPercentage >= 0 &&
+             data.cactusGrowthPercentage <= 100 &&
+             (!('cactusId' in data) || (data.cactusId is string && data.cactusId.size() <= 64)) &&
+             (!('drinks' in data) || (data.drinks is list && data.drinks.size() <= 100));
+    }
+
+    // User profile collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Users cannot list other user profiles
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().uid == userId;
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().uid == existing().uid;
+      allow delete: if false;
+
+      // Daily hydration records subcollection
+      match /dailyRecords/{recordId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(recordId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(recordId) &&
+                         isValidDailyRecord(incoming()) &&
+                         incoming().userId == userId;
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(recordId) &&
+                         isValidDailyRecord(incoming()) &&
+                         incoming().userId == existing().userId;
+        allow delete: if false;
+      }
+    }
+  }
+}

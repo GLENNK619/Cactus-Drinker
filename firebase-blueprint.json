@@ -1,0 +1,164 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with hydration preferences, streak metrics, and unlocked cactus garden data.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier of the user matching request.auth.uid",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name or nickname",
+          "maxLength": 64
+        },
+        "dailyGoal": {
+          "type": "number",
+          "description": "Daily hydration target in ml"
+        },
+        "servingSize": {
+          "type": "number",
+          "description": "Default water serving size per Fill Up tap in ml"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Hydration unit measurement",
+          "enum": ["ml", "oz"]
+        },
+        "currentStreak": {
+          "type": "number",
+          "description": "Consecutive days with achieved hydration target"
+        },
+        "longestStreak": {
+          "type": "number",
+          "description": "Historical longest consecutive-day streak achieved"
+        },
+        "totalSuccessfulDays": {
+          "type": "number",
+          "description": "Total number of successful hydration days completed"
+        },
+        "lastHydrationDate": {
+          "type": "string",
+          "description": "Date of latest recorded hydration activity in YYYY-MM-DD",
+          "maxLength": 10
+        },
+        "activeCactusId": {
+          "type": "string",
+          "description": "Identifier of currently selected cactus variety",
+          "maxLength": 64
+        },
+        "customPots": {
+          "type": "object",
+          "description": "Map of cactus variety IDs to chosen pot design IDs"
+        },
+        "notificationSettings": {
+          "type": "object",
+          "description": "Reminder settings including frequency, start/end hours, and push sound"
+        },
+        "unlockedCacti": {
+          "type": "array",
+          "description": "List of unlocked cactus varieties IDs"
+        },
+        "unlockedBadges": {
+          "type": "array",
+          "description": "List of unlocked achievement badges IDs"
+        },
+        "lifetimeTaps": {
+          "type": "number",
+          "description": "Total lifetime Fill Up water taps recorded by user"
+        },
+        "theme": {
+          "type": "string",
+          "description": "User interface visual theme preference",
+          "enum": ["light", "dark"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when user profile was created",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when user profile was last updated",
+          "maxLength": 64
+        }
+      },
+      "required": ["uid", "dailyGoal", "servingSize", "currentStreak", "longestStreak"]
+    },
+    "DailyRecord": {
+      "title": "DailyRecord",
+      "description": "Daily hydration entries, tap counts, and cactus growth status for a given calendar date.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Date identifier in YYYY-MM-DD format",
+          "maxLength": 32
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID",
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "Local calendar date formatted as YYYY-MM-DD",
+          "maxLength": 10
+        },
+        "totalIntake": {
+          "type": "number",
+          "description": "Total water consumed today in ml"
+        },
+        "goal": {
+          "type": "number",
+          "description": "Hydration target for the day in ml"
+        },
+        "goalAchieved": {
+          "type": "boolean",
+          "description": "Whether the daily hydration target has been met"
+        },
+        "tapsCount": {
+          "type": "number",
+          "description": "Number of Fill Up taps recorded today"
+        },
+        "cactusGrowthPercentage": {
+          "type": "number",
+          "description": "Cactus growth percentage today (each tap adds 5%, max 100%)"
+        },
+        "cactusId": {
+          "type": "string",
+          "description": "Cactus variety nurtured today",
+          "maxLength": 64
+        },
+        "drinks": {
+          "type": "array",
+          "description": "List of timestamped drink entries recorded today"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Timestamp of the most recent drink entry",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "date", "totalIntake", "goal", "goalAchieved", "tapsCount", "cactusGrowthPercentage"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profile and hydration streak state"
+    },
+    "/users/{userId}/dailyRecords/{recordId}": {
+      "schema": "DailyRecord",
+      "description": "Daily hydration records and historical intake logs"
+    }
+  }
+}
